@@ -1,7 +1,5 @@
 package com.example.controller;
 
-import javax.persistence.PostLoad;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,24 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.entity.Account;
 import com.example.entity.Message;
+import com.example.exception.InvalidLoginCredentialsException;
 import com.example.exception.UsernameAlreadyExistsException;
 import com.example.service.AccountService;
 import com.example.service.MessageService;
 
-import net.bytebuddy.asm.Advice.OffsetMapping.Factory.Illegal;
-
 import java.util.List;
 
-/**
- * TODO: You will need to write your own endpoints and handlers for your
- * controller using Spring. The endpoints you will need can be
- * found in readme.md as well as the test cases. You be required to use
- * the @GET/POST/PUT/DELETE/etc Mapping annotations
- * where applicable as well as the @ResponseBody and @PathVariable annotations.
- * You should
- * refer to prior mini-project labs and lecture materials for guidance on how a
- * controller may be built.
- */
 @RestController
 public class SocialMediaController {
 
@@ -45,23 +32,25 @@ public class SocialMediaController {
     public SocialMediaController(AccountService accountService, MessageService messageService) {
         this.accountService = accountService;
         this.messageService = messageService;
+
     }
 
     @PostMapping("/register")
     public ResponseEntity<Account> register(@RequestBody Account account) {
+
         Account newAccount = accountService.register(account);
+
         return new ResponseEntity<>(newAccount, HttpStatus.OK);
+
     }
 
     @PostMapping("/login")
     public ResponseEntity<Account> login(@RequestBody Account account) {
+
         Account exisitingAccount = accountService.login(account);
 
-        if (exisitingAccount == null) {
-            return new ResponseEntity<Account>(HttpStatus.UNAUTHORIZED);
-        }
-
         return new ResponseEntity<Account>(exisitingAccount, HttpStatus.OK);
+
     }
 
     @GetMapping("/messages")
@@ -87,10 +76,6 @@ public class SocialMediaController {
 
         Message message = messageService.getMessageById(messageId).orElse(null);
 
-        if (message == null) {
-            return new ResponseEntity<Message>(HttpStatus.OK);
-        }
-
         return new ResponseEntity<>(message, HttpStatus.OK);
 
     }
@@ -99,10 +84,6 @@ public class SocialMediaController {
     public ResponseEntity<Message> createMessage(@RequestBody Message message) {
 
         Message newMessage = messageService.createMessage(message).orElse(null);
-
-        if (newMessage == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
 
         return new ResponseEntity<>(newMessage, HttpStatus.OK);
 
@@ -116,10 +97,6 @@ public class SocialMediaController {
 
         int rowsAffected = messageService.updateMessage(message);
 
-        if (rowsAffected == 0) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
         return new ResponseEntity<>(rowsAffected, HttpStatus.OK);
 
     }
@@ -131,7 +108,9 @@ public class SocialMediaController {
         if (rowsAffected == 0) {
             return new ResponseEntity<>(HttpStatus.OK);
         }
+
         return new ResponseEntity<>(rowsAffected, HttpStatus.OK);
+
     }
 
     @ExceptionHandler(UsernameAlreadyExistsException.class)
@@ -143,6 +122,12 @@ public class SocialMediaController {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleIllegalArgumentException(IllegalArgumentException e) {
+        return e.getMessage();
+    }
+
+    @ExceptionHandler(InvalidLoginCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public String handleInvalidLoginCredentialsException(InvalidLoginCredentialsException e) {
         return e.getMessage();
     }
 

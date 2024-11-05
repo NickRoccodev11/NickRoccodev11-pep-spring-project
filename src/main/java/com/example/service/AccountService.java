@@ -1,13 +1,13 @@
 package com.example.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.stereotype.Service;
 
 import com.example.repository.AccountRepository;
 
 import com.example.entity.Account;
 import com.example.exception.UsernameAlreadyExistsException;
+import com.example.exception.InvalidLoginCredentialsException;
 
 @Service
 public class AccountService {
@@ -31,8 +31,7 @@ public class AccountService {
 
         Account takenAccount = accountRepository.findByUsername(account.getUsername());
 
-
-        if(takenAccount != null){
+        if (takenAccount != null) {
             throw new UsernameAlreadyExistsException("Username already exists, please choose a new one.");
         }
 
@@ -44,8 +43,12 @@ public class AccountService {
 
         Account existingAccount = accountRepository.findByUsername(account.getUsername());
 
-        if (existingAccount == null || !existingAccount.getPassword().equals(account.getPassword())) {
-            return null;
+        if (existingAccount == null) {
+            throw new InvalidLoginCredentialsException("Cannot find an account with that username");
+        }
+
+        if (!existingAccount.getPassword().equals(account.getPassword())) {
+            throw new InvalidLoginCredentialsException("Incorrect password");
         }
 
         return existingAccount;

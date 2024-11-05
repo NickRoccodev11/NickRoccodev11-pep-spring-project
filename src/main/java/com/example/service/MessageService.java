@@ -9,7 +9,6 @@ import com.example.repository.AccountRepository;
 import com.example.repository.MessageRepository;
 
 import java.util.Optional;
-
 import java.util.List;
 
 @Service
@@ -39,12 +38,13 @@ public class MessageService {
     public Optional<Message> createMessage(Message message) {
 
         Account existingAccount = accountRepository.findById(message.getPostedBy()).orElse(null);
+
         if (existingAccount == null) {
-            return Optional.empty();
+            throw new IllegalArgumentException("Account not found");
         }
 
         if (message.getMessageText().isBlank() || message.getMessageText().length() > 255) {
-            return Optional.empty();
+           throw new IllegalArgumentException("Message must be between 1 - 255 characters long. ");
         }
 
         return Optional.of(messageRepository.save(message));
@@ -55,26 +55,33 @@ public class MessageService {
         Message existingMessage = messageRepository.findById(message.getMessageId()).orElse(null);
 
         if (existingMessage == null) {
-            return 0;
+            throw new IllegalArgumentException("Could not find the message you are trying to update");
         }
 
         if (message.getMessageText().isBlank() || message.getMessageText().length() > 255) {
-            return 0;
+            throw new IllegalArgumentException("Message must be between 1 - 255 characters long");
         }
 
         Message updatedMessage = messageRepository.save(message);
 
-        return updatedMessage != null ? 1 : 0;
+        if( updatedMessage == null){
+            throw new IllegalArgumentException("Error updating message");
+        }
+
+        return 1;
     }
 
     public int deleteMessage(int messageId) {
+
         Message existingMessage = messageRepository.findById(messageId).orElse(null);
+
         if (existingMessage == null) {
             return 0;
         } else {
             messageRepository.deleteById(messageId);
             return 1;
         }
+        
     }
 
 

@@ -8,3 +8,4 @@ public class UsernameAlreadyExistsException extends RuntimeException {
     }
 
 }
+
