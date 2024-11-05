@@ -2,22 +2,26 @@ package com.example.controller;
 
 import javax.persistence.PostLoad;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.entity.Account;
 import com.example.entity.Message;
+import com.example.exception.UsernameAlreadyExistsException;
 import com.example.service.AccountService;
 import com.example.service.MessageService;
+
+import net.bytebuddy.asm.Advice.OffsetMapping.Factory.Illegal;
 
 import java.util.List;
 
@@ -37,6 +41,7 @@ public class SocialMediaController {
     AccountService accountService;
     MessageService messageService;
 
+    @Autowired
     public SocialMediaController(AccountService accountService, MessageService messageService) {
         this.accountService = accountService;
         this.messageService = messageService;
@@ -44,23 +49,8 @@ public class SocialMediaController {
 
     @PostMapping("/register")
     public ResponseEntity<Account> register(@RequestBody Account account) {
-
-        Account existingAccount = accountService.getAccountByUsername(account.getUsername());
-
-        // if the name is already taken
-        if (existingAccount != null) {
-            return new ResponseEntity<Account>(HttpStatus.CONFLICT);
-        }
-
         Account newAccount = accountService.register(account);
-
-        if (newAccount == null) {
-            return new ResponseEntity<Account>(HttpStatus.NOT_FOUND);
-        }
-
-
         return new ResponseEntity<>(newAccount, HttpStatus.OK);
-
     }
 
     @PostMapping("/login")
@@ -123,7 +113,7 @@ public class SocialMediaController {
             @PathVariable("message_id") int messageId) {
 
         message.setMessageId(messageId);
-        
+
         int rowsAffected = messageService.updateMessage(message);
 
         if (rowsAffected == 0) {
@@ -142,6 +132,18 @@ public class SocialMediaController {
             return new ResponseEntity<>(HttpStatus.OK);
         }
         return new ResponseEntity<>(rowsAffected, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String handleUsernameAlreadyExistsExcption(UsernameAlreadyExistsException e) {
+        return e.getMessage();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleIllegalArgumentException(IllegalArgumentException e) {
+        return e.getMessage();
     }
 
 }

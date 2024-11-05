@@ -6,10 +6,8 @@ import org.springframework.stereotype.Service;
 
 import com.example.repository.AccountRepository;
 
-import java.util.List;
-import java.util.ArrayList;
-
 import com.example.entity.Account;
+import com.example.exception.UsernameAlreadyExistsException;
 
 @Service
 public class AccountService {
@@ -24,11 +22,18 @@ public class AccountService {
     public Account register(Account account) {
 
         if (account.getUsername().isBlank()) {
-            return null;
+            throw new IllegalArgumentException("Username cannot be blank");
         }
 
         if (account.getPassword().isBlank() || account.getPassword().length() < 4) {
-            return null;
+            throw new IllegalArgumentException("Password must be greater than four characters long.");
+        }
+
+        Account takenAccount = accountRepository.findByUsername(account.getUsername());
+
+
+        if(takenAccount != null){
+            throw new UsernameAlreadyExistsException("Username already exists, please choose a new one.");
         }
 
         return accountRepository.save(account);
@@ -45,10 +50,6 @@ public class AccountService {
 
         return existingAccount;
 
-    }
-
-    public Account getAccountByUsername(String userName) {
-        return accountRepository.findByUsername(userName);
     }
 
 }
